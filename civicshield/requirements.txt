@@ -1,1 +1,3 @@
-# Dependencies will be added continuously
+transformers
+torch
+numpy
