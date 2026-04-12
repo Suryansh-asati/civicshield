@@ -1,7 +1,4 @@
-try:
-    from civicshield import config
-except ImportError:
-    import config
+import config
 
 def fuse_results(nlp_result: dict, image_result: dict) -> dict:
     # If a model outputted SAFE, we invert confidence conceptually for "harmfulness" score, 

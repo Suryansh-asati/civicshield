@@ -1,6 +1,4 @@
-import os
-
-from transformers import pipeline
+from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
 
 MODEL_NAME = "Hate-speech-CNERG/bert-base-uncased-hatexplain"
 
@@ -13,13 +11,17 @@ def _load_classifier():
     if _classifier is False:
         raise RuntimeError("HuggingFace model unavailable in this environment")
     if _classifier is None:
-        allow_download = os.getenv("CIVICSHIELD_ALLOW_MODEL_DOWNLOAD", "0") == "1"
-        kwargs = {}
-        if not allow_download:
-            # Default to local cache only to keep startup fast and deterministic.
-            kwargs["local_files_only"] = True
         try:
-            _classifier = pipeline("text-classification", model=MODEL_NAME, **kwargs)
+            tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+            model = AutoModelForSequenceClassification.from_pretrained(
+                MODEL_NAME,
+                use_safetensors=False,
+            )
+            _classifier = pipeline(
+                "text-classification",
+                model=model,
+                tokenizer=tokenizer,
+            )
         except Exception:
             _classifier = False
             raise

@@ -1,7 +1,4 @@
-try:
-    from civicshield import config
-except ImportError:
-    import config
+import config
 
 def make_decision(fused_result: dict) -> dict:
     score = fused_result.get("confidence", 0.0)

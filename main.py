@@ -1,11 +1,4 @@
-import sys
-import os
-import json
-
-# Add the project root to sys.path to allow imports from civicshield
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
-from civicshield.tasks.pipeline.pipeline_module import execute_pipeline
+from tasks.pipeline.pipeline_module import execute_pipeline
 
 def run_tests():
     payloads = [
@@ -35,7 +28,8 @@ def run_tests():
     for p in payloads:
         print(f"\nProcessing Post: {p['id']}")
         result = execute_pipeline(p)
-        print(json.dumps(result, indent=2))
+        print(f"Label: {result.get('Label', 'UNKNOWN')}")
+        print(f"Confidence: {float(result.get('Confidence', 0.0)):.4f}")
 
 if __name__ == '__main__':
     run_tests()
