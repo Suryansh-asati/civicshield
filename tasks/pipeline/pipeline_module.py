@@ -1,7 +1,7 @@
 from civicshield.tasks.input.input_module import process_input
 from civicshield.tasks.preprocessing.preprocessing_module import clean_data
 from civicshield.tasks.ocr.ocr_module import extract_text
-from civicshield.tasks.nlp.nlp_module import analyze_text
+from civicshield.tasks.nlp.nlp_module import analyze_text as analyze
 from civicshield.tasks.image.image_module import analyze_image
 from civicshield.tasks.fusion.fusion_module import fuse_results
 from civicshield.tasks.decision.decision_module import make_decision
