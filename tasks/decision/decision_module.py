@@ -1,7 +1,7 @@
-import sys
-import os
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..')))
-from civicshield import config
+try:
+    from civicshield import config
+except ImportError:
+    import config
 
 def make_decision(fused_result: dict) -> dict:
     score = fused_result.get("confidence", 0.0)

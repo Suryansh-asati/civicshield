@@ -1,12 +1,23 @@
-from civicshield.tasks.input.input_module import process_input
-from civicshield.tasks.preprocessing.preprocessing_module import clean_data
-from civicshield.tasks.ocr.ocr_module import extract_text
-from civicshield.tasks.nlp.nlp_module import analyze_text as analyze
-from civicshield.tasks.image.image_module import analyze_image
-from civicshield.tasks.fusion.fusion_module import fuse_results
-from civicshield.tasks.decision.decision_module import make_decision
-from civicshield.tasks.human_review.human_review_module import review_case
-from civicshield.tasks.output.output_module import generate_report
+try:
+    from civicshield.tasks.input.input_module import process_input
+    from civicshield.tasks.preprocessing.preprocessing_module import clean_data
+    from civicshield.tasks.ocr.ocr_module import extract_text
+    from civicshield.tasks.nlp.nlp_module import analyze_text
+    from civicshield.tasks.image.image_module import analyze_image
+    from civicshield.tasks.fusion.fusion_module import fuse_results
+    from civicshield.tasks.decision.decision_module import make_decision
+    from civicshield.tasks.human_review.human_review_module import review_case
+    from civicshield.tasks.output.output_module import generate_report
+except ImportError:
+    from tasks.input.input_module import process_input
+    from tasks.preprocessing.preprocessing_module import clean_data
+    from tasks.ocr.ocr_module import extract_text
+    from tasks.nlp.nlp_module import analyze_text
+    from tasks.image.image_module import analyze_image
+    from tasks.fusion.fusion_module import fuse_results
+    from tasks.decision.decision_module import make_decision
+    from tasks.human_review.human_review_module import review_case
+    from tasks.output.output_module import generate_report
 
 def execute_pipeline(payload: dict) -> dict:
     # 1. Input Validation
