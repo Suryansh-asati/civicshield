@@ -28,8 +28,14 @@ def run_tests():
     for p in payloads:
         print(f"\nProcessing Post: {p['id']}")
         result = execute_pipeline(p)
-        print(f"Label: {result.get('Label', 'UNKNOWN')}")
-        print(f"Confidence: {float(result.get('Confidence', 0.0)):.4f}")
+        if result.get("status") != "success":
+            print(f"Pipeline error: {result.get('message', 'unknown error')}")
+            continue
+
+        data = result.get("data") or {}
+        report = data.get("report") or {}
+        print(f"Label: {report.get('label', data.get('label', 'UNKNOWN'))}")
+        print(f"Confidence: {float(report.get('confidence', data.get('confidence', 0.0))):.4f}")
 
 if __name__ == '__main__':
     run_tests()

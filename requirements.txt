@@ -4,3 +4,4 @@ numpy
 openclaw
 cmdop
 tenacity
+httpx

@@ -5,10 +5,15 @@ except ModuleNotFoundError:  # Optional dependency
     AutoTokenizer = None
     pipeline = None
 
-MODEL_NAME = "Hate-speech-CNERG/bert-base-uncased-hatexplain"
+import config
+
+from tasks.common import classification, error, success
+
+MODEL_NAME = config.NLP_HF_MODEL_NAME
 
 # Lazy initialized classifier to avoid loading model at import time.
 _classifier = None
+_hf_failure_logged = False
 
 
 def _load_classifier():
@@ -20,6 +25,8 @@ def _load_classifier():
         raise RuntimeError("HuggingFace model unavailable in this environment")
     if _classifier is None:
         try:
+            if not config.NLP_USE_HF_MODEL:
+                raise RuntimeError("NLP_USE_HF_MODEL is disabled")
             tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
             model = AutoModelForSequenceClassification.from_pretrained(
                 MODEL_NAME,
@@ -29,6 +36,7 @@ def _load_classifier():
                 "text-classification",
                 model=model,
                 tokenizer=tokenizer,
+                device=config.NLP_HF_DEVICE,
             )
         except Exception:
             _classifier = False
@@ -39,13 +47,13 @@ def _load_classifier():
 def _fallback_rule_based(text: str) -> dict:
     lowered = text.lower()
     if any(token in lowered for token in ["hate", "kill", "offensive", "slur"]):
-        return {"label": "HARMFUL", "confidence": 0.65, "source": "NLP_FALLBACK"}
-    return {"label": "SAFE", "confidence": 0.55, "source": "NLP_FALLBACK"}
+        return classification(label="HARMFUL", confidence=0.65, source="nlp_fallback")
+    return classification(label="SAFE", confidence=0.55, source="nlp_fallback")
 
 
 def analyze_text(text: str) -> dict:
     if not text or not text.strip():
-        return {"label": "NO_TEXT", "confidence": 1.0, "source": "NLP"}
+        return success(classification(label="NO_TEXT", confidence=1.0, source="nlp"))
 
     label_map = {
         "LABEL_0": "HARMFUL",
@@ -58,16 +66,25 @@ def analyze_text(text: str) -> dict:
 
     try:
         classifier = _load_classifier()
-        result = classifier(text, truncation=True)[0]
+        result = classifier(text, truncation=config.NLP_TRUNCATION)[0]
         raw_label = str(result.get("label", "")).strip()
         mapped_label = label_map.get(raw_label, "UNKNOWN")
-        return {
-            "label": mapped_label,
-            "confidence": float(result.get("score", 0.0)),
-            "source": MODEL_NAME,
-            "raw_label": raw_label,
-        }
+        return success(
+            classification(
+                label=mapped_label,
+                confidence=float(result.get("score", 0.0)),
+                source=MODEL_NAME,
+                raw_label=raw_label,
+            )
+        )
     except Exception:
         # Keep pipeline runnable even if model download/runtime fails.
-        return _fallback_rule_based(text)
+        import traceback
+
+        global _hf_failure_logged
+        if not _hf_failure_logged:
+            _hf_failure_logged = True
+            print(f"[NLP] HuggingFace model failed; using fallback. model={MODEL_NAME}")
+            traceback.print_exc(limit=2)
+        return success(_fallback_rule_based(text))
 
