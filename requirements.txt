@@ -1,3 +1,6 @@
 transformers
 torch
 numpy
+openclaw
+cmdop
+tenacity

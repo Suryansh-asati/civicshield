@@ -1,4 +1,9 @@
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+try:
+    from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+except ModuleNotFoundError:  # Optional dependency
+    AutoModelForSequenceClassification = None
+    AutoTokenizer = None
+    pipeline = None
 
 MODEL_NAME = "Hate-speech-CNERG/bert-base-uncased-hatexplain"
 
@@ -8,6 +13,9 @@ _classifier = None
 
 def _load_classifier():
     global _classifier
+    if pipeline is None or AutoTokenizer is None or AutoModelForSequenceClassification is None:
+        _classifier = False
+        raise RuntimeError("transformers is not installed")
     if _classifier is False:
         raise RuntimeError("HuggingFace model unavailable in this environment")
     if _classifier is None:
