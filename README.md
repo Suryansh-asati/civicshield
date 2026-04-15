@@ -60,8 +60,8 @@ civicshield/
 ## 🛠️ Getting Started
 
 ### Prerequisites
-*   Python 3.8+
-*   Internet connection (for downloading HuggingFace models on first run)
+*   Python 3.10+ recommended (works with newer Linux distros)
+*   Internet connection (first run may download HuggingFace model weights)
 
 ### Installation
 1. Clone the repository.
@@ -70,11 +70,33 @@ civicshield/
    pip install -r requirements.txt
    ```
 
+Optional (only if you want to run the `agents/` demo with OpenClaw/CMDOP + Ollama):
+```bash
+pip install -r requirements-agents.txt
+```
+
+Note on Linux: installing `torch` can depend on your CUDA/CPU setup.
+If `pip install -r requirements.txt` fails on `torch`, install PyTorch using the official instructions for your platform, then re-run the requirements install.
+
 ### Running the System
 Execute the main entry point to run integrated tests across various scenarios (Neutral, Hate, Image-heavy, Borderline):
 ```bash
 python main.py
 ```
+
+Recommended for a clean demo:
+```bash
+DEMO_MODE=1 python main.py
+```
+
+To see stage inputs/outputs (debug mode):
+```bash
+DEBUG=1 python main.py
+```
+
+First-time model download:
+- If `transformers`/`torch` are installed and `NLP_USE_HF_MODEL=true`, the first run may download the HuggingFace model specified by `NLP_HF_MODEL_NAME`.
+- If the download fails or `transformers` is not installed, the system logs the reason and falls back to a lightweight rule-based classifier (demo-safe backup).
 
 ---
 
@@ -83,6 +105,10 @@ The system behavior is controlled via `config.py` (or `docs/core/CONFIG.md`):
 *   `THRESHOLD_HIGH = 0.7`: Above this, content is flagged as **HARMFUL**.
 *   `THRESHOLD_LOW = 0.4`: Below this, content is marked **SAFE**.
 *   `TEXT_WEIGHT = 0.6` / `IMAGE_WEIGHT = 0.4`: Weights for the fusion engine.
+
+Demo flags:
+* `DEMO_MODE`: skips OCR + human review; simplifies fusion for stable demos.
+* `DEBUG`: prints stage inputs/outputs and NLP tracebacks.
 
 ---
 

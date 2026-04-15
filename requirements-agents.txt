@@ -1,0 +1,5 @@
+# Optional dependencies for running agents/ (OpenClaw/CMDOP integration + Ollama HTTP calls)
+openclaw
+cmdop
+tenacity
+httpx

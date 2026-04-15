@@ -42,6 +42,9 @@ def _get_str(name: str, default: str) -> str:
 DEMO_MODE: bool = _get_bool("DEMO_MODE", False)
 """If enabled: skip OCR + human review; simplify fusion logic."""
 
+DEBUG: bool = _get_bool("DEBUG", False)
+"""If enabled: pipeline prints stage inputs/outputs and tracebacks."""
+
 
 # ==================== Thresholds / Fusion ====================
 

@@ -19,14 +19,21 @@ def execute_pipeline(payload: dict) -> dict:
     def log(stage: str, msg: str) -> None:
         print(f"[PIPELINE] {stage}: {msg}")
 
+    def log_debug(stage: str, msg: str) -> None:
+        if config.DEBUG:
+            print(f"[PIPELINE][DEBUG] {stage}: {msg}")
+
     def record(stage: str, res: dict) -> None:
         stage_log.append({"stage": stage, "status": res.get("status"), "message": res.get("message")})
 
     # 1) Input
     log("INPUT", "running...")
+    log_debug("INPUT", f"input: {payload}")
     input_res = safe_call("input", process_input, payload)
     record("input", input_res)
-    log("INPUT", f"output: {input_res}")
+    if input_res.get("status") == "error":
+        log("INPUT", f"ERROR: {input_res.get('message', 'unknown error')}")
+    log_debug("INPUT", f"output: {input_res}")
 
     base_payload = {}
     if input_res.get("status") == "success":
@@ -34,9 +41,12 @@ def execute_pipeline(payload: dict) -> dict:
 
     # 2) Preprocessing
     log("PREPROCESSING", "running...")
+    log_debug("PREPROCESSING", f"input: {base_payload}")
     prep_res = safe_call("preprocessing", clean_data, base_payload)
     record("preprocessing", prep_res)
-    log("PREPROCESSING", f"output: {prep_res}")
+    if prep_res.get("status") == "error":
+        log("PREPROCESSING", f"ERROR: {prep_res.get('message', 'unknown error')}")
+    log_debug("PREPROCESSING", f"output: {prep_res}")
 
     cleaned_payload = base_payload
     if prep_res.get("status") == "success":
@@ -51,9 +61,12 @@ def execute_pipeline(payload: dict) -> dict:
         log("OCR", "skipped (DEMO_MODE=true)")
     elif image:
         log("OCR", "running...")
+        log_debug("OCR", f"input: {image}")
         ocr_res = safe_call("ocr", extract_text, image)
         record("ocr", ocr_res)
-        log("OCR", f"output: {ocr_res}")
+        if ocr_res.get("status") == "error":
+            log("OCR", f"ERROR: {ocr_res.get('message', 'unknown error')}")
+        log_debug("OCR", f"output: {ocr_res}")
 
         if ocr_res.get("status") == "success":
             extracted_text = (ocr_res.get("data") or {}).get("extracted_text") or ""
@@ -65,9 +78,12 @@ def execute_pipeline(payload: dict) -> dict:
     nlp_res = None
     if text:
         log("NLP", "running...")
+        log_debug("NLP", f"input: {text}")
         nlp_res = safe_call("nlp", analyze_text, text)
         record("nlp", nlp_res)
-        log("NLP", f"output: {nlp_res}")
+        if nlp_res.get("status") == "error":
+            log("NLP", f"ERROR: {nlp_res.get('message', 'unknown error')}")
+        log_debug("NLP", f"output: {nlp_res}")
     else:
         log("NLP", "skipped (no text)")
 
@@ -75,23 +91,32 @@ def execute_pipeline(payload: dict) -> dict:
     image_res = None
     if image:
         log("IMAGE", "running...")
+        log_debug("IMAGE", f"input: {image}")
         image_res = safe_call("image", analyze_image, image)
         record("image", image_res)
-        log("IMAGE", f"output: {image_res}")
+        if image_res.get("status") == "error":
+            log("IMAGE", f"ERROR: {image_res.get('message', 'unknown error')}")
+        log_debug("IMAGE", f"output: {image_res}")
     else:
         log("IMAGE", "skipped (no image)")
 
     # 6) Fusion
     log("FUSION", "running...")
+    log_debug("FUSION", f"input: nlp={nlp_res} image={image_res}")
     fused_res = safe_call("fusion", fuse_results, nlp_res, image_res)
     record("fusion", fused_res)
-    log("FUSION", f"output: {fused_res}")
+    if fused_res.get("status") == "error":
+        log("FUSION", f"ERROR: {fused_res.get('message', 'unknown error')}")
+    log_debug("FUSION", f"output: {fused_res}")
 
     # 7) Decision
     log("DECISION", "running...")
+    log_debug("DECISION", f"input: {fused_res}")
     decision_res = safe_call("decision", make_decision, fused_res)
     record("decision", decision_res)
-    log("DECISION", f"output: {decision_res}")
+    if decision_res.get("status") == "error":
+        log("DECISION", f"ERROR: {decision_res.get('message', 'unknown error')}")
+    log_debug("DECISION", f"output: {decision_res}")
 
     # 8) Human review
     final_res = decision_res
@@ -99,15 +124,21 @@ def execute_pipeline(payload: dict) -> dict:
         log("HUMAN_REVIEW", "skipped (DEMO_MODE=true)")
     else:
         log("HUMAN_REVIEW", "running...")
+        log_debug("HUMAN_REVIEW", f"input: decision={decision_res} context={cleaned_payload}")
         final_res = safe_call("human_review", review_case, decision_res, cleaned_payload)
         record("human_review", final_res)
-        log("HUMAN_REVIEW", f"output: {final_res}")
+        if final_res.get("status") == "error":
+            log("HUMAN_REVIEW", f"ERROR: {final_res.get('message', 'unknown error')}")
+        log_debug("HUMAN_REVIEW", f"output: {final_res}")
 
     # 9) Output
     log("OUTPUT", "running...")
+    log_debug("OUTPUT", f"input: final={final_res} payload={payload}")
     output_res = safe_call("output", generate_report, final_res, payload)
     record("output", output_res)
-    log("OUTPUT", f"output: {output_res}")
+    if output_res.get("status") == "error":
+        log("OUTPUT", f"ERROR: {output_res.get('message', 'unknown error')}")
+    log_debug("OUTPUT", f"output: {output_res}")
 
     if output_res.get("status") != "success":
         # As a last resort, return a consistent error payload.

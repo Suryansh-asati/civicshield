@@ -79,12 +79,13 @@ def analyze_text(text: str) -> dict:
         )
     except Exception:
         # Keep pipeline runnable even if model download/runtime fails.
-        import traceback
-
         global _hf_failure_logged
         if not _hf_failure_logged:
             _hf_failure_logged = True
             print(f"[NLP] HuggingFace model failed; using fallback. model={MODEL_NAME}")
-            traceback.print_exc(limit=2)
+            if config.DEBUG:
+                import traceback
+
+                print(traceback.format_exc(limit=2).rstrip())
         return success(_fallback_rule_based(text))
 
