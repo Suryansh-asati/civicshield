@@ -1,12 +1,34 @@
+# Virtual environments
 venv/
+.venv/
+env/
+ENV/
+
+# Local env files
+.env
+.env.*
 
 # Python
 __pycache__/
+*.pyc
 *.py[cod]
 *$py.class
+
+# Testing / type checking / lint caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
 
 # Logs
 logs/

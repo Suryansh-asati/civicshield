@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import datetime
+import logging
+import os
 import config
 
 from tasks.common import is_module_response, safe_call
@@ -13,15 +16,57 @@ from tasks.decision.decision_module import make_decision
 from tasks.human_review.human_review_module import review_case
 from tasks.output.output_module import generate_report
 
+
+_LOGGER_CONFIGURED = False
+
+
+def _get_pipeline_logger() -> logging.Logger:
+    global _LOGGER_CONFIGURED
+    logger = logging.getLogger("civicshield.pipeline")
+    if _LOGGER_CONFIGURED:
+        return logger
+
+    logger.setLevel(logging.DEBUG if config.DEBUG else logging.INFO)
+    logger.propagate = False
+
+    try:
+        os.makedirs("logs", exist_ok=True)
+        date_str = datetime.date.today().isoformat()
+        log_path = os.path.join("logs", f"pipeline_{date_str}.log")
+        handler = logging.FileHandler(log_path, encoding="utf-8")
+        handler.setLevel(logging.DEBUG if config.DEBUG else logging.INFO)
+        formatter = logging.Formatter(
+            fmt="%(asctime)s %(levelname)s %(message)s",
+            datefmt="%Y-%m-%d %H:%M:%S",
+        )
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
+    except Exception:
+        # If file logging cannot be configured, keep console-only behavior.
+        pass
+
+    _LOGGER_CONFIGURED = True
+    return logger
+
 def execute_pipeline(payload: dict) -> dict:
     stage_log: list[dict] = []
 
+    file_logger = _get_pipeline_logger()
+
     def log(stage: str, msg: str) -> None:
         print(f"[PIPELINE] {stage}: {msg}")
+        try:
+            file_logger.info(f"[{stage}] {msg}")
+        except Exception:
+            pass
 
     def log_debug(stage: str, msg: str) -> None:
         if config.DEBUG:
             print(f"[PIPELINE][DEBUG] {stage}: {msg}")
+            try:
+                file_logger.debug(f"[{stage}] {msg}")
+            except Exception:
+                pass
 
     def record(stage: str, res: dict) -> None:
         stage_log.append({"stage": stage, "status": res.get("status"), "message": res.get("message")})
